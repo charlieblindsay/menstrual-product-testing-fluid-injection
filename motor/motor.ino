@@ -15,7 +15,7 @@ void setup() {
 void loop() {
 	// Rotate CW slowly at 10 RPM
 	myStepper.setSpeed(10);
-	myStepper.step(10);
+	myStepper.step(10); // TODO: test different number of steps to see which injects the most accurate volume of fluid
   delay(2930);
 	
 	// Rotate CCW quickly at 10 RPM
