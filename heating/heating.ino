@@ -24,7 +24,7 @@
 #define MAX6675_SO   12
 #define MAX6675_SCK  13
 
-Adafruit_MAX31856 max = Adafruit_MAX31856(10, 11, 12, 13);
+Adafruit_MAX31856 thermocouple = Adafruit_MAX31856(10, 11, 12, 13);
 
 void setup() {
   // lcd.init();
@@ -32,14 +32,14 @@ void setup() {
   Serial.begin(9600); // open the serial port at 9600 bps:
   // Use software SPI: CS, DI, DO, CLK
 
-  max.begin();
-  max.setThermocoupleType(MAX31856_TCTYPE_T);
+  thermocouple.begin();
+  thermocouple.setThermocoupleType(MAX31856_TCTYPE_T);
 }
 
 void loop() {
-  float ambient_temp = max.readCJTemperature();
-  float tip_temp = max.readThermocoupleTemperature();
-  Serial.println(ambient_temp);
+  float ambient_temp = thermocouple.readCJTemperature();
+  float tip_temp = thermocouple.readThermocoupleTemperature();
+  // Serial.println(ambient_temp);
   Serial.println(tip_temp);
   // lcd.setCursor(0,0);
   // lcd.print("TEMPERATURE");
