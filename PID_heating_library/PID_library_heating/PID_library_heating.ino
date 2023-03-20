@@ -6,6 +6,10 @@
 #define MAX6675_SO   12
 #define MAX6675_SCK  13
 
+#include <Adafruit_MAX31856.h>
+
+Adafruit_MAX31856 max = Adafruit_MAX31856(10, 11, 12, 13);
+
 int PWM_pin = 4;
 
 double temperature_reading;
@@ -20,35 +24,33 @@ double Kp=1.875, Ki=0.46875, Kd=1.875;
 //create PID instance 
 PID myPID(&temperature_reading, &PID_output, &temperature_setpoint, Kp, Ki, Kd, DIRECT);
 
-Adafruit_MAX31856 thermocouple = Adafruit_MAX31856(10, 11, 12, 13);
-
 void setup() {
   // put your setup code here, to run once:
 
-  Serial.begin(9600);   
-  //Turn the PID on
-  myPID.SetMode(AUTOMATIC);
-  //Adjust PID values
+  Serial.begin(9600); // open the serial port at 9600 bps:
+  // Use software SPI: CS, DI, DO, CLK
+
+  max.begin();
+  max.setThermocoupleType(MAX31856_TCTYPE_T);
+  myPID.SetSampleTime(200);
   myPID.SetTunings(Kp, Ki, Kd);
+  myPID.SetMode(AUTOMATIC);
 
 }
 
 void loop() {
-  temperature_reading = thermocouple.readThermocoupleTemperature();
+  // put your main code here, to run repeatedly:
 
   myPID.Compute(); //PID calculation
   analogWrite(PWM_pin,PID_output);   //Write the output to the mosfet pin as calculated by the PID function
-  
-  // if(loop_counter % 10 == 0){  
-    // Serial.print("Setpoint Value = ");  
-    // Serial.println(temperature_setpoint);
-    // Serial.print("Temperature Reading = ");
-    Serial.println(temperature_reading);
-    // Serial.print("PID Output Value = ");
-    // Serial.println(PID_output);
-  // }
 
-  loop_counter ++;
+  float tip_temp = max.readThermocoupleTemperature();
+  Serial.println(tip_temp);
+  Serial.println(PID_output);
+  // lcd.setCursor(0,0);
+  // lcd.print("TEMPERATURE");
+  // lcd.setCursor(7,1);  
+  // lcd.print(temperature_read,1);    
+  delay(1000);
 
-  delay(300); 
 }
