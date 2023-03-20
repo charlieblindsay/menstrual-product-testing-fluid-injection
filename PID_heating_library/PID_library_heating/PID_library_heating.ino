@@ -39,14 +39,14 @@ void loop() {
   myPID.Compute(); //PID calculation
   analogWrite(PWM_pin,PID_output);   //Write the output to the mosfet pin as calculated by the PID function
   
-  if(loop_counter % 10 == 0){  
-    Serial.print("Setpoint Value = ");  
-    Serial.println(temperature_setpoint);
-    Serial.print("Temperature Reading = ");
+  // if(loop_counter % 10 == 0){  
+    // Serial.print("Setpoint Value = ");  
+    // Serial.println(temperature_setpoint);
+    // Serial.print("Temperature Reading = ");
     Serial.println(temperature_reading);
-    Serial.print("PID Output Value = ");
-    Serial.println(PID_output);
-  }
+    // Serial.print("PID Output Value = ");
+    // Serial.println(PID_output);
+  // }
 
   loop_counter ++;
 

@@ -37,7 +37,6 @@ void setup() {
 }
 
 void loop() {
-  float ambient_temp = thermocouple.readCJTemperature();
   float tip_temp = thermocouple.readThermocoupleTemperature();
   // Serial.println(ambient_temp);
   Serial.println(tip_temp);
