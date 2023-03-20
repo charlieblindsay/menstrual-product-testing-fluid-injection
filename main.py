@@ -6,6 +6,7 @@ total_time = 60 * 60 * 4
 diameter_of_syringe = 0.02
 lead_screw_pitch = 0.002
 number_motor_steps_per_motor_movement = 10
+motor_RPM = 1
 
 def calc_volume_injected_per_step(diameter_of_syringe, lead_screw_pitch, number_motor_steps_per_motor_movement):
     area_of_syringe = math.pi * (diameter_of_syringe / 2) ** 2
@@ -45,4 +46,4 @@ def calc_delay_time(motor_RPM, number_motor_steps_in_one_revolution, number_moto
     time_for_one_step = number_motor_steps_per_motor_movement / number_motor_steps_in_one_revolution * time_for_one_revolution
     return time_period_of_step - time_for_one_step
 
-print(calc_delay_time(10, number_motor_steps_in_one_revolution, number_motor_steps_per_motor_movement, time_period_of_step))
+print(calc_delay_time(motor_RPM, number_motor_steps_in_one_revolution, number_motor_steps_per_motor_movement, time_period_of_step))
