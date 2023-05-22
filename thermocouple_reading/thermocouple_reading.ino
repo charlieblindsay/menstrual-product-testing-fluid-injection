@@ -31,11 +31,11 @@ void setup() {
   // Use software SPI: CS, DI, DO, CLK
 
   thermocouple.begin();
-  thermocouple.setThermocoupleType(MAX31856_TCTYPE_T);
+  thermocouple.setThermocoupleType(MAX31856_TCTYPE_K);
 }
 
 void loop() {
   float temperature_reading = thermocouple.readThermocoupleTemperature();
-  Serial.println(temperature_reading);
+  Serial.print(temperature_reading);
   delay(1000);
 }
