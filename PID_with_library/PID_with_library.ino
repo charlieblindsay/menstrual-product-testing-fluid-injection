@@ -11,10 +11,12 @@
 
 Adafruit_MAX31856 max = Adafruit_MAX31856(10, 11, 12, 13);
 
-int PWM_pin = 3;
+bool user_input_entered = 0;
+
+int heater_PWM_pin = 3;
 
 double temperature_reading;
-double temperature_setpoint = 40; // body temperature
+double temperature_setpoint = 40;
 double PID_output = 0;
 
 double initial_power = 140;
@@ -45,28 +47,36 @@ void setup() {
 void loop() {
   // put your main code here, to run repeatedly:
 
-  temperature_reading = max.readThermocoupleTemperature();
-
-  if(!has_reached_setpoint){
-    if(!isnan(temperature_reading)){
-      analogWrite(PWM_pin,initial_power);
-    }
-
-    if(temperature_reading > temperature_setpoint){
-      has_reached_setpoint = 1;
-    }
+  if (!user_input_entered){
 
   }
-  
-  if(has_reached_setpoint){
-  if(!isnan(temperature_reading)){
-    myPID.Compute(); //PID calculation
-    analogWrite(PWM_pin,PID_output);   //Write the output to the mosfet pin as calculated by the PID function
-  }}
 
-  Serial.print(temperature_reading);
-  Serial.print(" ");
-  Serial.println(PID_output);
+  if (user_input_entered){
+    temperature_reading = max.readThermocoupleTemperature();
 
-  delay(50);
+    if(!has_reached_setpoint){
+      if(!isnan(temperature_reading)){
+        analogWrite(heater_PWM_pin,initial_power);
+      }
+
+      if(temperature_reading > temperature_setpoint){
+        has_reached_setpoint = 1;
+      }
+
+    }
+    
+    if(has_reached_setpoint){
+      if(!isnan(temperature_reading)){
+        myPID.Compute(); //PID calculation
+        analogWrite(heater_PWM_pin,PID_output);   //Write the output to the mosfet pin as calculated by the PID function
+      }
+    }
+
+    Serial.print(temperature_reading);
+    Serial.print(" ");
+    Serial.println(PID_output);
+
+    delay(50);
+  }
+
 }

@@ -24,7 +24,7 @@
 #define MAX6675_SCK  13
 
 //Pins
-int PWM_pin = 3;
+int heater_PWM_pin = 3;
 
 
 //Variables
@@ -47,7 +47,7 @@ Adafruit_MAX31856 thermocouple = Adafruit_MAX31856(10, 11, 12, 13);
 
 
 void setup() {
-  pinMode(PWM_pin,OUTPUT);
+  pinMode(heater_PWM_pin,OUTPUT);
   TCCR2B = TCCR2B & B11111000 | 0x03;    // pin 3 and 11 PWM frequency of 980.39 Hz
   Time = millis(); 
   // lcd.init();
@@ -89,7 +89,7 @@ void loop() {
   if(PID_value > 255)  
   {    PID_value = 255;  }
   //Now we can write the PWM signal to the mosfet on digital pin D3
-  analogWrite(PWM_pin,255-PID_value);
+  analogWrite(heater_PWM_pin,255-PID_value);
   Serial.println(temperature_read);
   Serial.println(255-PID_value);
   previous_error = PID_error;     //Remember to store the previous error for next loop.
