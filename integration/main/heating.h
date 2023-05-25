@@ -10,8 +10,8 @@ double Kp=10, Ki=1,Kd=10;
 
 // TODO: change the value below
 
-double initial_temperature_setpoint = 45;
-double temperature_setpoint = 43; // body temperature
-double initial_PID_output = 180;
+double initial_temperature_setpoint = 54;
+double temperature_setpoint = 50; 
+double initial_PID_output = 200;
 
 #endif

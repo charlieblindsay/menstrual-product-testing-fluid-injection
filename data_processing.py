@@ -11,7 +11,7 @@ path = appdata_path + '\Realterm\capture.txt'
 with open(path, 'r') as read_file:
     lines = read_file.readlines()
     temperature_data = [float(line.split(' ')[0]) for line in lines]
-    PID_output = [float(line.split(' ')[1].split('\n')[0]) for line in lines]
+    PID_output = [float(line.split(' ')[2].split('\n')[0]) for line in lines]
 
 now = datetime.now()
 with open(f'{now.day}-{now.month} {now.hour}-{now.minute}-{now.second}.txt', 'w+') as write_file:

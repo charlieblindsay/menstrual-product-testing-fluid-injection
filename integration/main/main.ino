@@ -136,6 +136,8 @@ void loop() {
 
     Serial.print(temperature_reading);
     Serial.print(" ");
+    Serial.print(counter);
+    Serial.print(" ");
     Serial.println(PID_output);
 
     lcd.setRGB(r,g,b);
