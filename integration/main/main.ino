@@ -24,8 +24,13 @@ int flow_rate_option = 1;
 int number_of_delays_between_motor_steps;
 
 bool has_reached_initial_setpoint = 0;
+bool has_reached_num_loops_before_fluid_reaches_body_temperature = 0;
 double temperature_reading;
 double PID_output;
+double PID_output_for_body_temperature;
+
+double current_PWM_output;
+
 char buffer_temperature_reading[7];
 char buffer_PID_output[7];
 
@@ -83,7 +88,8 @@ void loop() {
 
     // If the thermocouple is not working (i.e. is reading a null value):
     if(isnan(temperature_reading)){
-      analogWrite(heater_PWM_pin,0); // turn off heater
+      current_PWM_output = 0;
+      analogWrite(heater_PWM_pin,current_PWM_output); // turn off heater
     }
 
     // If the thermocouple reads a value:
@@ -91,7 +97,8 @@ void loop() {
       
       // If has_reached_initial_setpoint bool equal to false, keep the PID output constant
       if(!has_reached_initial_setpoint){
-        analogWrite(heater_PWM_pin,initial_PID_output);
+        current_PWM_output = initial_PID_output;
+        analogWrite(heater_PWM_pin,current_PWM_output);
         
         // If current temperature reading above setpoint temperature, set the has_reached_initial_setpoint bool to true 
         if(temperature_reading > initial_temperature_setpoint){
@@ -99,10 +106,16 @@ void loop() {
         }
       }
 
+      if (!has_reached_num_loops_before_fluid_reaches_body_temperature && counter > num_loops_before_fluid_reaches_body_temperature){
+        has_reached_num_loops_before_fluid_reaches_body_temperature = 1;
+        temperature_setpoint = body_temperature;        
+      }
+
       // If setpoint temperature reached, use PID control
       if(has_reached_initial_setpoint){
         myPID.Compute(); //PID calculation
-        analogWrite(heater_PWM_pin,PID_output);   //Write the output to the mosfet pin as calculated by the PID function
+        current_PWM_output = PID_output;
+        analogWrite(heater_PWM_pin,current_PWM_output);   //Write the output to the mosfet pin as calculated by the PID function
       }
 
     }
@@ -138,7 +151,7 @@ void loop() {
     Serial.print(" ");
     Serial.print(counter);
     Serial.print(" ");
-    Serial.println(PID_output);
+    Serial.println(current_PWM_output);
 
     lcd.setRGB(r,g,b);
 
