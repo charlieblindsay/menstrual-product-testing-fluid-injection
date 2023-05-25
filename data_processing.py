@@ -17,7 +17,9 @@ now = datetime.now()
 with open(f'{now.day}-{now.month} {now.hour}-{now.minute}-{now.second}.txt', 'w+') as write_file:
     write_file.writelines([f'{str(i)}\n' for i in temperature_data])
 
-time = [i * 0.1 for i in range(len(temperature_data))]
+time_scaler = (37/35)*1.5
+
+time = [i * time_scaler for i in range(len(temperature_data))]
 
 plt.plot(time, temperature_data)
 plt.xlabel('Time (s)')

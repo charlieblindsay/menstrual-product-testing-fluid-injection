@@ -15,11 +15,11 @@ const int stepsPerRevolution = 2038;
 
 int get_number_of_delays_between_motor_steps(int flow_rate_option){
   if (flow_rate_option == 1){
-    return 53;
+    return 171;
   }
 
   if (flow_rate_option == 2){
-    return 171;
+    return 53;
   }
 }
 
