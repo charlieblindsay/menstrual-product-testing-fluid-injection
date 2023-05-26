@@ -11,6 +11,7 @@ while(True):
     now = datetime.now()
     with open(path, 'r') as read_file:
         lines = read_file.readlines()
+        
         last_read_temperature = [float(line.split(' ')[0]) for line in lines][-1]
         last_read_counter = [float(line.split(' ')[1]) for line in lines][-1]
         last_read_PID_output = [float(line.split(' ')[2].split('\n')[0]) for line in lines][-1]
