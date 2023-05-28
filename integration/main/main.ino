@@ -22,7 +22,7 @@ int flow_rate_option = 1;
 // -------------OBJECT INSTANTIATION---------------
     // Creates an instance of stepper class
     // Pins entered in sequence IN1-IN3-IN2-IN4 for proper step sequence
-Stepper myStepper = Stepper(stepsPerRevolution, 8, 10, 9, 11);
+Stepper stepperMotor = Stepper(stepsPerRevolution, 8, 10, 9, 11);
 
 // TODO: Add pins information
 
@@ -54,6 +54,8 @@ bool bool_indicating_temperature_was_always_between_20_and_30_throughout_last_ch
 // -------------DECLARING AND INITIALIZING VARIABLES---------------
 int loop_counter=0;
 int number_of_loops_per_checking_cycle = 100;
+int number_motor_steps_per_motor_movement = 10;
+int motor_speed_in_rpm = 1;
 int delay_time_in_ms = 50;
 int number_of_delays_between_motor_steps;
 
@@ -87,7 +89,7 @@ void setup() {
   PID_controller.SetTunings(Kp, Ki, Kd);
   PID_controller.SetMode(AUTOMATIC);
 
-  myStepper.setSpeed(1);
+  stepperMotor.setSpeed(motor_speed_in_rpm);
   number_of_delays_between_motor_steps = get_number_of_delays_between_motor_steps(flow_rate_option);
 
   lcd.init();
@@ -97,43 +99,12 @@ void loop() {
 
   // -------------MOTOR CONTROL---------------
   if (loop_counter % number_of_delays_between_motor_steps == 0){
-    myStepper.step(10); // TODO: test different number of steps to see which injects the most accurate volume of fluid
+    stepperMotor.step(number_motor_steps_per_motor_movement); // TODO: test different number of steps to see which injects the most accurate volume of fluid
   }
 
   // -------------TEMPERATURE READING---------------
 
   temperature_reading = thermocouple.readThermocoupleTemperature();
-
-  // -------------LCD---------------
-
-  // write_text_and_number_to_lcd(0, "Temp: ", temperature_reading, buffer_temperature_reading, 5);
-  // write_text_and_number_to_lcd(1, "PWM out: ", PID_output, buffer_PID_output, 9);
-
-  // Printing to LCD and serial
-  // lcd.clear();
-  lcd.setCursor(0,0);
-  lcd.send_string("Temp: "); // TODO: convert temperature_reading to a string and print it to LCD
-
-  lcd.setCursor(6, 0);
-    // converts temperature_reading number to a string (base 10) and sends to LCD
-  lcd.send_string(itoa(temperature_reading, buffer_temperature_reading, 10));
-
-  lcd.setCursor(0,1);
-  lcd.send_string("PWM out: ");
-
-  lcd.setCursor(10, 1);
-  lcd.send_string(itoa(PID_output, buffer_PID_output, 10));
-
-  // -------------PRINTING TO SERIAL---------------
-
-  // TODO: Remove and add to testing branch
-  Serial.print(temperature_reading);
-  Serial.print(" ");
-  Serial.print(loop_counter);
-  Serial.print(" ");
-  Serial.println(current_PWM_output);
-
-  lcd.setRGB(lcd_red_value,lcd_green_value,lcd_blue_value);
 
 
   // -------------SAFETY MEASURES & THERMOCOUPLE CHECKS---------------
@@ -221,8 +192,41 @@ void loop() {
 
   }
 
+  // -------------SETTING HEATER PWM VALUE---------------
+
   // Write the PWM output to the heater PWM pin
   analogWrite(heater_PWM_pin,current_PWM_output);
+
+    // -------------PRINTING TO LCD---------------
+
+  // write_text_and_number_to_lcd(0, "Temp: ", temperature_reading, buffer_temperature_reading, 5);
+  // write_text_and_number_to_lcd(1, "PWM out: ", PID_output, buffer_PID_output, 9);
+
+  // Printing to LCD and serial
+  // lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.send_string("Temp: "); // TODO: convert temperature_reading to a string and print it to LCD
+
+  lcd.setCursor(6, 0);
+    // converts temperature_reading number to a string (base 10) and sends to LCD
+  lcd.send_string(itoa(temperature_reading, buffer_temperature_reading, 10));
+
+  lcd.setCursor(0,1);
+  lcd.send_string("PWM out: ");
+
+  lcd.setCursor(10, 1);
+  lcd.send_string(itoa(PID_output, buffer_PID_output, 10));
+
+  // -------------PRINTING TO SERIAL---------------
+
+  // TODO: Remove and add to testing branch
+  Serial.print(temperature_reading);
+  Serial.print(" ");
+  Serial.print(loop_counter);
+  Serial.print(" ");
+  Serial.println(current_PWM_output);
+
+  lcd.setRGB(lcd_red_value,lcd_green_value,lcd_blue_value);
 
   loop_counter = loop_counter + 1;
 
