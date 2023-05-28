@@ -34,6 +34,11 @@ double current_PWM_output;
 char buffer_temperature_reading[7];
 char buffer_PID_output[7];
 
+// TODO: Add safety measures:
+// - If temperature goes below 20 degrees, it is likely that the thermocouple is wired the wrong way around, alert the user and turn the heaters off
+// - If the thermocouple reads between 20 and 30 degrees for a minute, it is likely that the thermocouple has been removed from the block so turn the heaters off and alert the user
+
+
 //create PID instance 
 PID myPID(&temperature_reading, &PID_output, &temperature_setpoint, Kp, Ki, Kd, DIRECT);
 
