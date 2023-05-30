@@ -4,8 +4,10 @@ import time
 from datetime import datetime
 import matplotlib.pyplot as plt
 
-appdata_path = os.getenv('APPDATA')
-path = appdata_path + '\Realterm\capture.txt'
+# appdata_path = os.getenv('APPDATA')
+# path = appdata_path + '\Realterm\capture.txt'
+document_path = '/Users/alan/Documents/GitHub/menstrual-product-testing-fluid-injection/Saved\Data'
+path = document_path + ''
 
 start_time = datetime.now()
 

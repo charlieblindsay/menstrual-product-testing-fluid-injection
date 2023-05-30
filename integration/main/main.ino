@@ -3,7 +3,7 @@
 #include <SPI.h>
 #include <Stepper.h>
 #include <Adafruit_MAX31856.h>
-#include <PID_v1.h>
+#include <PID_v1_bc.h>
 #include "motor.h"
 #include "heating.h"
 #include "stdlib.h"
@@ -35,7 +35,10 @@ char buffer_temperature_reading[7];
 char buffer_PID_output[7];
 
 //create PID instance 
-PID myPID(&temperature_reading, &PID_output, &temperature_setpoint, Kp, Ki, Kd, DIRECT);
+
+double delta = &temperature_reading - &temperature_adjustment;
+
+PID myPID(&delta, &PID_output, &temperature_setpoint, Kp, Ki, Kd, DIRECT);
 
 // Defines the number of steps per rotation
 
@@ -43,25 +46,25 @@ PID myPID(&temperature_reading, &PID_output, &temperature_setpoint, Kp, Ki, Kd, 
 // Pins entered in sequence IN1-IN3-IN2-IN4 for proper step sequence
 Stepper myStepper = Stepper(stepsPerRevolution, 8, 10, 9, 11);
 
-Waveshare_LCD1602_RGB lcd(16,2);  //16 characters and 2 lines of show
+//Waveshare_LCD1602_RGB lcd(16,2);  //16 characters and 2 lines of show
 int r,g,b,counter=0;
-
-void write_text_and_number_to_lcd(int row_number, char text_to_write, int number_to_write, char buffer, int text_length){
-    lcd.setCursor(0,row_number);
-    lcd.send_string(text_to_write);
-
-    lcd.setCursor(text_length + 1, text_length);
-    lcd.send_string(itoa(number_to_write, buffer, 10));
-}
+//
+//void write_text_and_number_to_lcd(int row_number, char text_to_write, int number_to_write, char buffer, int text_length){
+//    lcd.setCursor(0,row_number);
+//    lcd.send_string(text_to_write);
+//
+//    lcd.setCursor(text_length + 1, text_length);
+//    lcd.send_string(itoa(number_to_write, buffer, 10));
+//}
 
 void setup() {
-    lcd.init();
+//    lcd.init();
     Serial.begin(9600);
 
     myStepper.setSpeed(1);
 
     thermocouple.begin();
-    thermocouple.setThermocoupleType(MAX31856_TCTYPE_K); // TODO: is this the right type of thermocouple?
+    thermocouple.setThermocoupleType(MAX31856_TCTYPE_T); 
     myPID.SetSampleTime(50);
     myPID.SetTunings(Kp, Ki, Kd);
     myPID.SetMode(AUTOMATIC);
@@ -119,43 +122,57 @@ void loop() {
       }
 
     }
-
-    // write_text_and_number_to_lcd(0, "Temp: ", temperature_reading, buffer_temperature_reading, 5);
-    // write_text_and_number_to_lcd(1, "PWM out: ", PID_output, buffer_PID_output, 9);
-
-    // Printing to LCD and serial
-    // lcd.clear();
-    lcd.setCursor(0,0);
-    lcd.send_string("Temp: "); // TODO: convert temperature_reading to a string and print it to LCD
-
-    lcd.setCursor(6, 0);
-    // converts temperature_reading number to a string (base 10) and sends to LCD
-    lcd.send_string(itoa(temperature_reading, buffer_temperature_reading, 10));
-
-    lcd.setCursor(0,1);
-    lcd.send_string("PWM out: ");
-
-    lcd.setCursor(10, 1);
-    lcd.send_string(itoa(PID_output, buffer_PID_output, 10));
-
-    if (counter % number_of_delays_between_motor_steps == 0){
-      myStepper.step(10); // TODO: test different number of steps to see which injects the most accurate volume of fluid
-    }
+//
+//    // write_text_and_number_to_lcd(0, "Temp: ", temperature_reading, buffer_temperature_reading, 5);
+//    // write_text_and_number_to_lcd(1, "PWM out: ", PID_output, buffer_PID_output, 9);
+//
+//    // Printing to LCD and serial
+//    // lcd.clear();
+//    lcd.setCursor(0,0);
+//    lcd.send_string("Temp: "); // TODO: convert temperature_reading to a string and print it to LCD
+//
+//    lcd.setCursor(6, 0);
+//    // converts temperature_reading number to a string (base 10) and sends to LCD
+//    lcd.send_string(itoa(temperature_reading, buffer_temperature_reading, 10));
+//
+//    lcd.setCursor(0,1);
+//    lcd.send_string("PWM out: ");
+//
+//    lcd.setCursor(10, 1);
+//    lcd.send_string(itoa(PID_output, buffer_PID_output, 10));
+//
+//    if (counter % number_of_delays_between_motor_steps == 0){
+//      myStepper.step(10); // TODO: test different number of steps to see which injects the most accurate volume of fluid
+//    }
 
     // r = (abs(sin(3.14*counter/180)))*255;
     // g = (abs(sin(3.14*(counter + 60)/180)))*255;
     // b = (abs(sin(3.14*(counter + 120)/180)))*255;
     counter = counter + 1;
 
-    Serial.print(temperature_reading);
+
+  Serial.print(temperature_reading);
+  Serial.print(" ");
+
+ uint8_t fault = thermocouple.readFault();
+  if (fault) {
+    if (fault & MAX31856_FAULT_CJRANGE) Serial.println("Cold Junction Range Fault");
+    if (fault & MAX31856_FAULT_TCRANGE) Serial.println("Thermocouple Range Fault");
+    if (fault & MAX31856_FAULT_CJHIGH)  Serial.println("Cold Junction High Fault");
+    if (fault & MAX31856_FAULT_CJLOW)   Serial.println("Cold Junction Low Fault");
+    if (fault & MAX31856_FAULT_TCHIGH)  Serial.println("Thermocouple High Fault");
+    if (fault & MAX31856_FAULT_TCLOW)   Serial.println("Thermocouple Low Fault");
+    if (fault & MAX31856_FAULT_OVUV)    Serial.println("Over/Under Voltage Fault");
+    if (fault & MAX31856_FAULT_OPEN)    Serial.println("Thermocouple Open Fault");
+  }
     Serial.print(" ");
     Serial.print(counter);
     Serial.print(" ");
     Serial.println(current_PWM_output);
 
-    lcd.setRGB(r,g,b);
+//    lcd.setRGB(r,g,b);
 
-    delay(50);
+    delay(100);
   // }
 
 }
