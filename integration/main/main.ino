@@ -27,10 +27,14 @@ Stepper stepperMotor = Stepper(stepsPerRevolution, 8, 10, 9, 11);
 // TODO: Add pins information
 
 Adafruit_MAX31856 thermocouple = Adafruit_MAX31856(5, 6, 7, 4);
+// Adafruit_MAX31856 thermocouple = Adafruit_MAX31856(44, 46, 48, 50);
+
 PID PID_controller(&temperature_reading, &PID_output, &temperature_setpoint, Kp, Ki, Kd, DIRECT);
 Waveshare_LCD1602_RGB lcd(16,2);  //16 characters and 2 lines of show
 
 // -------------INITIALIZING BOOLEAN VALUES---------------
+// TODO: Move these boolean values into a header file
+
 bool has_reached_initial_setpoint = 0;
 bool has_fluid_reached_body_temperature = 0;
 
@@ -54,7 +58,6 @@ bool bool_indicating_temperature_was_always_between_20_and_30_throughout_last_ch
 // -------------DECLARING AND INITIALIZING VARIABLES---------------
 int loop_counter=0;
 int number_of_loops_per_checking_cycle = 100;
-int number_motor_steps_per_motor_movement = 10;
 int motor_speed_in_rpm = 1;
 int delay_time_in_ms = 50;
 int number_of_delays_between_motor_steps;
@@ -83,7 +86,7 @@ void setup() {
   // -------------OBJECT INITIALIZATION---------------
 
   thermocouple.begin();
-  thermocouple.setThermocoupleType(MAX31856_TCTYPE_K); // TODO: is this the right type of thermocouple?
+  thermocouple.setThermocoupleType(MAX31856_TCTYPE_T); // TODO: is this the right type of thermocouple?
     
   PID_controller.SetSampleTime(50);
   PID_controller.SetTunings(Kp, Ki, Kd);
@@ -98,63 +101,67 @@ void setup() {
 void loop() {
 
   // -------------MOTOR CONTROL---------------
-  if (loop_counter % number_of_delays_between_motor_steps == 0){
-    stepperMotor.step(number_motor_steps_per_motor_movement); // TODO: test different number of steps to see which injects the most accurate volume of fluid
-  }
+  milliseconds_since_start_of_program = millis();
+  time_since_last_motor_movement_in_ms = milliseconds_since_start_of_program - motor_movement_counter * time_period_of_one_motor_movement_in_ms;
+  number_of_motor_movements_to_perform = floor(time_since_last_motor_movement_in_ms / time_period_of_one_motor_movement_in_ms); 
+  number_of_motor_steps_to_perform = number_of_motor_movements_to_perform * number_motor_steps_per_motor_movement;
+  // Serial.println(number_of_motor_steps_to_perform);
+  stepperMotor.step(number_of_motor_steps_to_perform);
+  motor_movement_counter = motor_movement_counter + number_of_motor_movements_to_perform;
 
   // -------------TEMPERATURE READING---------------
 
-  temperature_reading = thermocouple.readThermocoupleTemperature();
+  temperature_reading = thermocouple.readThermocoupleTemperature() - temperature_reading_offset;
 
 
   // -------------SAFETY MEASURES & THERMOCOUPLE CHECKS---------------
 
   // Check for FIRST SAFETY MEASURE (explained above)
   // Checks that temperature reading between 20 and 30 and that previous temperature was also between 20 and 30
-  if (temperature_reading > 20 && temperature_reading < 30 && bool_indicating_temperature_between_20_and_30 == 1){
-    bool_indicating_temperature_between_20_and_30 = 1;
-  }
-  else{
-    bool_indicating_temperature_between_20_and_30 = 0;
-  }
+  // if (temperature_reading > 20 && temperature_reading < 30 && bool_indicating_temperature_between_20_and_30 == 1){
+  //   bool_indicating_temperature_between_20_and_30 = 1;
+  // }
+  // else{
+  //   bool_indicating_temperature_between_20_and_30 = 0;
+  // }
 
   // If check for FIRST SAFETY MEASURE in previous checking cycle indicated 
   // temperature reading was always between 20 and 30
-  if (bool_indicating_temperature_was_always_between_20_and_30_throughout_last_checking_cycle){
-    lcd_red_value = 255;
-    current_PWM_output = 0;
-    lcd.clear();
-    lcd.setCursor(0,0);
-    lcd.send_string("Temp not rising");
-    lcd.setCursor(0,1);
-    lcd.send_string("See thermocouple");
-  }
+  // if (bool_indicating_temperature_was_always_between_20_and_30_throughout_last_checking_cycle){
+  //   lcd_red_value = 255;
+  //   current_PWM_output = 0;
+  //   lcd.clear();
+  //   lcd.setCursor(0,0);
+  //   lcd.send_string("Temp not rising");
+  //   lcd.setCursor(0,1);
+  //   lcd.send_string("See thermocouple");
+  // }
 
   // A checking cycle is 100 loops.
   // At the end of the checking cycle, if bool_indicating_temperature_between_20_and_30 is still equal to 1,
   // it indicates that all temperature readings during the checking cycle were between 20 and 30 degrees C
   // so bool_indicating_temperature_was_always_between_20_and_30_throughout_last_checking_cycle set equal to 1
-  if (loop_counter % number_of_loops_per_checking_cycle){
-    if (bool_indicating_temperature_between_20_and_30 == 1){
-      bool_indicating_temperature_was_always_between_20_and_30_throughout_last_checking_cycle = 1;
-    }
+  // if (loop_counter % number_of_loops_per_checking_cycle){
+  //   if (bool_indicating_temperature_between_20_and_30 == 1){
+  //     bool_indicating_temperature_was_always_between_20_and_30_throughout_last_checking_cycle = 1;
+  //   }
 
-    // Reset bool so next checking cycle for FIRST SAFETY MEASURE can be carried out
-    bool_indicating_temperature_between_20_and_30 = 1;
-  }
+  //   // Reset bool so next checking cycle for FIRST SAFETY MEASURE can be carried out
+  //   bool_indicating_temperature_between_20_and_30 = 1;
+  // }
 
   // SECOND SAFETY MEASURE
   // If temperature goes below 20 degrees, it is likely that the thermocouple is wired the wrong way 
   // around, alert the user and turn the heaters off
-  if(temperature_reading < 20){
-    lcd_red_value = 255;
-    current_PWM_output = 0;
-    lcd.clear();
-    lcd.setCursor(0,0);
-    lcd.send_string("Temp < 20. See");
-    lcd.setCursor(0,1);
-    lcd.send_string("Thermocoup wires");
-  }
+  // if(temperature_reading < 20){
+  //   lcd_red_value = 255;
+  //   current_PWM_output = 0;
+  //   lcd.clear();
+  //   lcd.setCursor(0,0);
+  //   lcd.send_string("Temp < 20. See");
+  //   lcd.setCursor(0,1);
+  //   lcd.send_string("Thermocoup wires");
+  // }
 
   // If the thermocouple is not working (i.e. is reading a null value):
   if(isnan(temperature_reading)){

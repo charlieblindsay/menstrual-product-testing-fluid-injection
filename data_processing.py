@@ -3,12 +3,8 @@ import os
 import pandas as pd
 from datetime import datetime
 
-# appdata_path = os.getenv('APPDATA')
-# path = appdata_path + '\Realterm\capture.txt'
-
-path = '26-5 15-20-28.txt'
-
-# path = 'capture.txt'
+appdata_path = os.getenv('APPDATA')
+path = appdata_path + '\Realterm\capture.txt'
 
 with open(path, 'r') as read_file:
     lines = read_file.readlines()
