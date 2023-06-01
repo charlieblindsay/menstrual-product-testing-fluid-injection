@@ -30,7 +30,7 @@ int milliseconds_since_start_of_program;
 
 int number_of_motor_steps_to_perform;
 int number_of_motor_movements_to_perform;
-int number_motor_steps_per_motor_movement = 10;
+int number_motor_steps_per_motor_movement = 40;
 
 double time_since_last_motor_movement_in_ms;
 

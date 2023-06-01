@@ -21,9 +21,9 @@ double PID_output;
 double current_PWM_output;
 
 // TODO: change the datatypes of these to int
-double initial_temperature_setpoint = 38;
-double temperature_setpoint = 38;
-double body_temperature = 38;
+double initial_temperature_setpoint = 40;
+double temperature_setpoint = 37;
+double body_temperature = 30;
 int initial_PID_output = 255;
 
 #endif

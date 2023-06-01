@@ -86,7 +86,7 @@ void setup() {
   // -------------OBJECT INITIALIZATION---------------
 
   thermocouple.begin();
-  thermocouple.setThermocoupleType(MAX31856_TCTYPE_T); // TODO: is this the right type of thermocouple?
+  thermocouple.setThermocoupleType(MAX31856_TCTYPE_K); // TODO: is this the right type of thermocouple?
     
   PID_controller.SetSampleTime(50);
   PID_controller.SetTunings(Kp, Ki, Kd);
