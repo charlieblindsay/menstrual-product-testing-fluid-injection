@@ -36,7 +36,7 @@ Waveshare_LCD1602_RGB lcd(16,2);  //16 characters and 2 lines of show
 // TODO: Move these boolean values into a header file
 
 bool has_reached_initial_setpoint = 0;
-bool has_fluid_reached_body_temperature = 0;
+bool block_has_reached_constant_temperature = 0;
 
 // FIRST SAFETY MEASURE
 // If the thermocouple reads between 20 and 30 degrees for a minute, it is likely that the 
@@ -55,9 +55,10 @@ bool bool_indicating_temperature_between_20_and_30 = 1;
 // For reasons mentioned above, the heaters should then be turned off
 bool bool_indicating_temperature_was_always_between_20_and_30_throughout_last_checking_cycle = 0;
 
+bool bool_indicating_temperature_within_one_degree_of_temperature_setpoint = 1;
+
 // -------------DECLARING AND INITIALIZING VARIABLES---------------
-int loop_counter=0;
-int number_of_loops_per_checking_cycle = 100;
+
 int motor_speed_in_rpm = 1;
 int delay_time_in_ms = 50;
 int number_of_delays_between_motor_steps;
@@ -101,13 +102,16 @@ void setup() {
 void loop() {
 
   // -------------MOTOR CONTROL---------------
-  milliseconds_since_start_of_program = millis();
-  time_since_last_motor_movement_in_ms = milliseconds_since_start_of_program - motor_movement_counter * time_period_of_one_motor_movement_in_ms;
-  number_of_motor_movements_to_perform = floor(time_since_last_motor_movement_in_ms / time_period_of_one_motor_movement_in_ms); 
-  number_of_motor_steps_to_perform = number_of_motor_movements_to_perform * number_motor_steps_per_motor_movement;
-  // Serial.println(number_of_motor_steps_to_perform);
-  stepperMotor.step(number_of_motor_steps_to_perform);
-  motor_movement_counter = motor_movement_counter + number_of_motor_movements_to_perform;
+  if(block_has_reached_constant_temperature){
+    milliseconds_since_start_of_program = millis();
+    time_since_last_motor_movement_in_ms = milliseconds_since_start_of_program - motor_movement_counter * time_period_of_one_motor_movement_in_ms;
+    number_of_motor_movements_to_perform = floor(time_since_last_motor_movement_in_ms / time_period_of_one_motor_movement_in_ms); 
+    number_of_motor_steps_to_perform = number_of_motor_movements_to_perform * number_motor_steps_per_motor_movement;
+    // Serial.println(number_of_motor_steps_to_perform);
+    stepperMotor.step(number_of_motor_steps_to_perform);
+    motor_movement_counter = motor_movement_counter + number_of_motor_movements_to_perform;
+  }
+
 
   // -------------TEMPERATURE READING---------------
 
@@ -150,6 +154,35 @@ void loop() {
   //   bool_indicating_temperature_between_20_and_30 = 1;
   // }
 
+
+    // Check for FIRST SAFETY MEASURE (explained above)
+  // Checks that temperature reading between 20 and 30 and that previous temperature was also between 20 and 30
+  if(!block_has_reached_constant_temperature){
+    // TODO: try to reduce steady state error so can reduce 2 (see below) to 1
+    if (temperature_reading > temperature_setpoint - 2 && temperature_reading < temperature_setpoint + 1 && bool_indicating_temperature_within_one_degree_of_temperature_setpoint == 1){
+      bool_indicating_temperature_within_one_degree_of_temperature_setpoint = 1;
+    }
+    else{
+      bool_indicating_temperature_within_one_degree_of_temperature_setpoint = 0;
+    }
+
+    // If statement for performing constant temperature check at the end of the checking cycle
+    if (millis() / time_period_of_constant_temperature_checks > number_of_temperature_checks_completed + 1){
+      number_of_temperature_checks_completed = number_of_temperature_checks_completed + 1;
+      if (bool_indicating_temperature_within_one_degree_of_temperature_setpoint == 1){
+        block_has_reached_constant_temperature = 1;
+
+        motor_start_time = millis();
+      }
+      else{
+        // Reset bool so next checking cycle for FIRST SAFETY MEASURE can be carried out
+        bool_indicating_temperature_within_one_degree_of_temperature_setpoint = 1;
+      }
+
+    }
+  }
+
+
   // SECOND SAFETY MEASURE
   // If temperature goes below 20 degrees, it is likely that the thermocouple is wired the wrong way 
   // around, alert the user and turn the heaters off
@@ -183,11 +216,6 @@ void loop() {
       if(temperature_reading > initial_temperature_setpoint){
         has_reached_initial_setpoint = 1;
       }
-    }
-
-    if (!has_fluid_reached_body_temperature && loop_counter > num_loops_before_fluid_reaches_body_temperature){
-      has_fluid_reached_body_temperature = 1;
-      temperature_setpoint = body_temperature;        
     }
 
       // If setpoint temperature reached, use PID control
@@ -227,15 +255,18 @@ void loop() {
   // -------------PRINTING TO SERIAL---------------
 
   // TODO: Remove and add to testing branch
+  // Serial.print(" ");
+  // Serial.print(number_of_temperature_checks_completed);
+  // Serial.print(" ");
+  // Serial.print(block_has_reached_constant_temperature);
+  // Serial.print(" ");
   Serial.print(temperature_reading);
   Serial.print(" ");
-  Serial.print(loop_counter);
+  Serial.print(millis() / 1000);
   Serial.print(" ");
   Serial.println(current_PWM_output);
 
   lcd.setRGB(lcd_red_value,lcd_green_value,lcd_blue_value);
-
-  loop_counter = loop_counter + 1;
 
   delay(delay_time_in_ms);
 }

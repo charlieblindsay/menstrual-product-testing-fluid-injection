@@ -23,10 +23,11 @@ int get_number_of_delays_between_motor_steps(int flow_rate_option){
   }
 }
 
-// int time_period_of_one_motor_movement_in_ms = 2960;
 int time_period_of_one_motor_movement_in_ms = 2960;
 int motor_movement_counter = 0;
 int milliseconds_since_start_of_program;
+
+int motor_start_time;
 
 int number_of_motor_steps_to_perform;
 int number_of_motor_movements_to_perform;
