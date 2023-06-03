@@ -1,23 +1,22 @@
+// #include "stdlib.h" TODO: Remove this line if code works fine
+
+// 3rd party libraries for:
+#include <Adafruit_MAX31856.h> // Thermocouple amplifier board
+#include <Stepper.h> // Stepper motor
+#include <PID_v1.h> // PID control
+
+// 3rd party serial communication library
+#include <SPI.h>
+
+// 3rd party LCD library
 #include <Wire.h>
 #include "Waveshare_LCD1602_RGB.h"
-#include <SPI.h>
-#include <Stepper.h>
-#include <PID_v1.h>
+
+// Bespoke libraries containing constants
 #include "motor.h"
 #include "heating.h"
-#include "stdlib.h"
-#include <Adafruit_MAX31856.h>
 
 // TODO: put code in the loop into functions
-
-// bool has_user_input_been_entered = 0;
-
-// USER INPUT POINT
-// This is how the user changes between light and heavy flow rates
-// Set flow_rate_option = 1 for light flow (5 ml over 4 hours) - CURRENT SETTING
-// Set flow_rate_option = 2 for heavy flow (15 ml over 4 hours)
-
-int flow_rate_option = 1;
 
 // -------------OBJECT INSTANTIATION---------------
     // Creates an instance of stepper class
@@ -27,7 +26,6 @@ Stepper stepperMotor = Stepper(stepsPerRevolution, 8, 10, 9, 11);
 // TODO: Add pins information
 
 Adafruit_MAX31856 thermocouple = Adafruit_MAX31856(5, 6, 7, 4);
-// Adafruit_MAX31856 thermocouple = Adafruit_MAX31856(44, 46, 48, 50);
 
 PID PID_controller(&temperature_reading, &PID_output, &temperature_setpoint, Kp, Ki, Kd, DIRECT);
 Waveshare_LCD1602_RGB lcd(16,2);  //16 characters and 2 lines of show
@@ -94,7 +92,6 @@ void setup() {
   PID_controller.SetMode(AUTOMATIC);
 
   stepperMotor.setSpeed(motor_speed_in_rpm);
-  number_of_delays_between_motor_steps = get_number_of_delays_between_motor_steps(flow_rate_option);
 
   lcd.init();
 }
@@ -103,11 +100,10 @@ void loop() {
 
   // -------------MOTOR CONTROL---------------
   if(block_has_reached_constant_temperature){
-    milliseconds_since_start_of_program = millis();
-    time_since_last_motor_movement_in_ms = milliseconds_since_start_of_program - motor_movement_counter * time_period_of_one_motor_movement_in_ms;
+    milliseconds_since_block_reached_steady_state_temperature = millis() - motor_start_time;
+    time_since_last_motor_movement_in_ms = milliseconds_since_block_reached_steady_state_temperature - motor_movement_counter * time_period_of_one_motor_movement_in_ms;
     number_of_motor_movements_to_perform = floor(time_since_last_motor_movement_in_ms / time_period_of_one_motor_movement_in_ms); 
     number_of_motor_steps_to_perform = number_of_motor_movements_to_perform * number_motor_steps_per_motor_movement;
-    // Serial.println(number_of_motor_steps_to_perform);
     stepperMotor.step(number_of_motor_steps_to_perform);
     motor_movement_counter = motor_movement_counter + number_of_motor_movements_to_perform;
   }
