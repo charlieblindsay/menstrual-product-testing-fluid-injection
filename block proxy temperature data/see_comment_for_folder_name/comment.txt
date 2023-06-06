@@ -1,0 +1,1 @@
+heating_up_from_room_temp_to_55_then_to_47_motor_starts_at_11_minutes_so_spreadsheet_delayed
