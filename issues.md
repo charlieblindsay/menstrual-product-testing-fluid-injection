@@ -6,3 +6,8 @@ Changes with manufacturing:
 
 Issues with assembling:
 - Realized that our method of 
+
+
+User input steps:
+1. Motor starts reversing
+2. User presses left button to stop motor

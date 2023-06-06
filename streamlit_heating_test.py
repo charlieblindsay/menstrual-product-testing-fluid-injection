@@ -18,7 +18,7 @@ while(True):
         temperature_data = [float(line.split(' ')[0]) for line in lines]
         time_list = [float(line.split(' ')[1]) for line in lines]
         last_read_temperature = [float(line.split(' ')[0]) for line in lines][-1]
-        last_read_PID_output = [float(line.split(' ')[2].split('\n')[0]) for line in lines][-1]
+        last_read_PID_output_for_heater_PWM_value = [float(line.split(' ')[2].split('\n')[0]) for line in lines][-1]
 
     fig, ax = plt.subplots()
 
@@ -30,7 +30,7 @@ while(True):
     with placeholder.container():
         st.title('HEATING TEST')
         st.subheader(f'Current temperature = {last_read_temperature} degrees C')
-        st.subheader(f'PID output = {last_read_PID_output}')
+        st.subheader(f'PID output = {last_read_PID_output_for_heater_PWM_value}')
         
         st.pyplot(fig)
 

@@ -15,7 +15,9 @@ def calc_time_period_of_motor_movement(volume_fluid_injected):
     syringe_distance_per_movement = (number_motor_steps_per_motor_movement / number_motor_steps_in_one_revolution) * lead_screw_pitch
     volume_injected_per_movement = syringe_distance_per_movement * area_of_syringe
 
+    print(volume_injected_per_movement)
     volume_flow_rate = volume_fluid_injected / total_time
+    print(volume_flow_rate)
     time_period_of_motor_movement = volume_injected_per_movement / volume_flow_rate
 
     time_period_of_motor_movement_in_ms = time_period_of_motor_movement * 10 ** 3
