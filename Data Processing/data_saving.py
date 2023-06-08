@@ -12,7 +12,6 @@ with open(path, 'r') as read_file:
     temperature_data = [float(line.split(' ')[0]) for line in lines]
     time_list = [float(line.split(' ')[1]) for line in lines]
 
-
 now = datetime.now()
 with open(f'{now.day}-{now.month} {now.hour}-{now.minute}-{now.second}.txt', 'w+') as write_file:
     write_file.writelines([f'{str(i)}\n' for i in temperature_data])
