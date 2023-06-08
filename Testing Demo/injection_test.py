@@ -7,17 +7,15 @@ import numpy as np
 denity_of_fluid = 1.17
 
 def calc_required_mass_injected(time_since_start_test, total_volume_injected, duration_of_test):
-    time_motor_has_been_moving = time_since_start_test - 50
+    time_motor_has_been_moving = time_since_start_test
     total_mass_of_fluid = denity_of_fluid * total_volume_injected
 
-    return time_motor_has_been_moving / duration_of_test * total_mass_of_fluid + 0.05
+    return time_motor_has_been_moving / duration_of_test * total_mass_of_fluid
 
 appdata_path = os.getenv('APPDATA')
 path = appdata_path + '\Realterm\capture.txt'
 
-
 placeholder = st.empty()
-
 
 while(True):
     now = datetime.now()

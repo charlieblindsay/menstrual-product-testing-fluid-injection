@@ -4,7 +4,6 @@ import pandas as pd
 from datetime import datetime
 import numpy as np
 
-
 number_of_data_points = 3483
 end_time = 2150
 path = 'data/heating_up_to_50_cooling_to_47_30_minute_test_5_minutes_until_steady_state_so_offset_fluid_data_short_needle/2-6 14-34-13 cropped data elongated.txt'
