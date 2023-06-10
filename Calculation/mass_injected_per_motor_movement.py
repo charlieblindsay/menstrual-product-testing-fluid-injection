@@ -10,4 +10,5 @@ volume_injected_in_m3 = steps_per_motor_movement / steps_per_revolution * pitch 
 volume_injected_in_ml = volume_injected_in_m3 * 1000000
 mass_injected = volume_injected_in_ml * density_of_fluid
 
+print(f'Volume of fluid injected per motor movement = {volume_injected_in_ml}')
 print(f'Mass injected per motor movement = {mass_injected}')

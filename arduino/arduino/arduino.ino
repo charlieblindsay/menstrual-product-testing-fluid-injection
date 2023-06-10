@@ -60,7 +60,6 @@ int lcd_red_value = 0;
 int lcd_green_value = 0;
 int lcd_blue_value = 0;
 
-
 const int LEFT_BUTTON_PIN = 13;
 const int RIGHT_BUTTON_PIN = 12;
 int right_button_last_state = 1;
@@ -76,7 +75,11 @@ bool selected_flow_rate;
 
 int delay_ms_between_button_presses = 1000;
 
-int milliseconds_since_start_of_programme;
+unsigned long milliseconds_since_start_of_programme_when_user_finished_entering_inputs;
+
+unsigned long milliseconds_since_user_entered_inputs;
+
+unsigned long countdown_before_motor_starts;
 
 char buffer_current_temperature_reading[7];
 char buffer_PID_output_for_heater_PWM_value[7];
@@ -86,7 +89,7 @@ void write_text_and_number_to_lcd(Waveshare_LCD1602_RGB lcd, int row_number, cha
     lcd.setCursor(0,row_number);
     lcd.send_string(text_to_write);
 
-    lcd.setCursor(text_length + 1, text_length);
+    lcd.setCursor(text_length + 1, row_number);
     lcd.send_string(itoa(number_to_write, buffer, 10));
 }
 
@@ -101,7 +104,7 @@ void setup() {
   // -------------OBJECT INITIALIZATION---------------
 
   thermocouple.begin();
-  thermocouple.setThermocoupleType(MAX31856_TCTYPE_K); // TODO: is this the right type of thermocouple?
+  thermocouple.setThermocoupleType(MAX31856_TCTYPE_K);
     
   PID_controller.SetSampleTime(50);
   PID_controller.SetTunings(Kp, Ki, Kd);
@@ -116,36 +119,35 @@ void loop() {
 
   if(!user_has_started_test){
 
-    if(!motor_reversing_has_stopped){
-      // read the state of the switch/button:
-      left_button_current_state = digitalRead(LEFT_BUTTON_PIN);
-      
-      if(left_button_last_state == LOW && left_button_current_state == HIGH){
-        motor_reversing_has_stopped = 1;
-        Serial.println("Motor has stopped");
-        delay(delay_ms_between_button_presses);
-      }
-
-      // save the last state
-      left_button_last_state = left_button_current_state;
-    }
-
-    if(motor_reversing_has_stopped && !user_has_selected_flow_rate){
+    if(!user_has_selected_flow_rate){      
       left_button_current_state = digitalRead(LEFT_BUTTON_PIN);
       right_button_current_state = digitalRead(RIGHT_BUTTON_PIN);
+
+      lcd.send_string("Red for light");
+      lcd.setCursor(0, 1);
+      lcd.send_string("Blue for heavy..");
       
       if(left_button_last_state == LOW && left_button_current_state == HIGH){
         user_has_selected_flow_rate = 1;
-        selected_flow_rate = 0;
-        Serial.println("Light flow selected");    
+        time_period_of_one_motor_movement_in_ms = 8879;
+        lcd.clear();  
+        lcd.send_string("Light flow");
+        lcd.setCursor(0, 1);
+        lcd.send_string("selected");
+
         delay(delay_ms_between_button_presses);
+        lcd.clear();
       }
 
       if(right_button_last_state == LOW && right_button_current_state == HIGH){
         user_has_selected_flow_rate = 1;
-        selected_flow_rate = 1;
-        Serial.println("Heavy flow selected");      
+        time_period_of_one_motor_movement_in_ms = 2960;
+        lcd.clear();  
+        lcd.send_string("Heavy flow");
+        lcd.setCursor(0, 1);
+        lcd.send_string("selected");  
         delay(delay_ms_between_button_presses);
+        lcd.clear();
       }
 
       // save the last state
@@ -153,14 +155,24 @@ void loop() {
       right_button_last_state = right_button_current_state;
     }
 
-    if(motor_reversing_has_stopped && user_has_selected_flow_rate && !user_has_started_test){
+    if(user_has_selected_flow_rate && !user_has_started_test){
+
+      lcd.send_string("Select Red");
+      lcd.setCursor(0, 1);
+      lcd.send_string("to start test...");
+
       // read the state of the switch/button:
       left_button_current_state = digitalRead(LEFT_BUTTON_PIN);
       
       if(left_button_last_state == LOW && left_button_current_state == HIGH){
         user_has_started_test = 1;
-        Serial.println("Test started");
+        lcd.clear();
+        lcd.send_string("Test Started"); 
         delay(delay_ms_between_button_presses);
+        lcd.clear();
+
+        milliseconds_since_start_of_programme_when_user_finished_entering_inputs = millis();
+
       }
 
       // save the last state
@@ -169,53 +181,61 @@ void loop() {
 
   }
 
-  if(user_has_started_test){
-    // -------------MOTOR CONTROL---------------
-    milliseconds_since_start_of_programme = millis();
-
-    if(!fluid_has_reached_body_temperature){
-      if(milliseconds_since_start_of_programme > number_of_milliseconds_before_fluid_reaches_body_temperature){
-        fluid_has_reached_body_temperature = 1;
-      }
-    }
-
-    if(fluid_has_reached_body_temperature){
-      milliseconds_since_motor_started = milliseconds_since_start_of_programme - number_of_milliseconds_before_fluid_reaches_body_temperature;
-      time_since_last_motor_movement_in_ms = milliseconds_since_motor_started - motor_movement_counter * time_period_of_one_motor_movement_in_ms;
-      number_of_motor_movements_to_perform = floor(time_since_last_motor_movement_in_ms / time_period_of_one_motor_movement_in_ms); 
-      number_of_motor_steps_to_perform = number_of_motor_movements_to_perform * number_motor_steps_per_motor_movement;
-      stepperMotor.step(number_of_motor_steps_to_perform);
-      motor_movement_counter = motor_movement_counter + number_of_motor_movements_to_perform;
-    }
-
+  if(user_has_started_test && !test_is_complete){
 
     // -------------TEMPERATURE READING---------------
 
     current_temperature_reading = thermocouple.readThermocoupleTemperature();
 
+    // -------------MOTOR CONTROL---------------
+    milliseconds_since_user_entered_inputs = millis() - milliseconds_since_start_of_programme_when_user_finished_entering_inputs;
+    countdown_before_motor_starts = (number_of_milliseconds_before_fluid_reaches_body_temperature - milliseconds_since_user_entered_inputs) / 1000;
+
+    if(!fluid_has_reached_body_temperature){
+      lcd.setCursor(0,0);
+      lcd.send_string("Block Temp: "); // TODO: convert current_temperature_reading to a string and print it to LCD
+
+      lcd.setCursor(12, 0);
+        // converts current_temperature_reading number to a string (base 10) and sends to LCD
+      lcd.send_string(itoa(current_temperature_reading, buffer_current_temperature_reading, 10));
+
+      lcd.setCursor(0,1);
+      lcd.send_string("Countdown: ");
+
+      lcd.setCursor(11, 1);
+      lcd.send_string(itoa(countdown_before_motor_starts, buffer_PID_output_for_heater_PWM_value, 10));
+
+      if(milliseconds_since_user_entered_inputs > number_of_milliseconds_before_fluid_reaches_body_temperature){
+        fluid_has_reached_body_temperature = 1;
+
+        lcd.clear();
+      }
+    }
+
+    if(fluid_has_reached_body_temperature){
+      milliseconds_since_motor_started = milliseconds_since_user_entered_inputs - number_of_milliseconds_before_fluid_reaches_body_temperature;
+      time_since_last_motor_movement_in_ms = milliseconds_since_motor_started - motor_movement_counter * time_period_of_one_motor_movement_in_ms;
+      number_of_motor_movements_to_perform = floor(time_since_last_motor_movement_in_ms / time_period_of_one_motor_movement_in_ms); 
+      number_of_motor_steps_to_perform = number_of_motor_movements_to_perform * number_motor_steps_per_motor_movement;
+      stepperMotor.step(number_of_motor_steps_to_perform);
+      motor_movement_counter = motor_movement_counter + number_of_motor_movements_to_perform;
+
+      lcd.setCursor(0,0);
+      lcd.send_string("Block Temp: "); // TODO: convert current_temperature_reading to a string and print it to LCD
+
+      lcd.setCursor(12, 0);
+          // converts current_temperature_reading number to a string (base 10) and sends to LCD
+      lcd.send_string(itoa(current_temperature_reading, buffer_current_temperature_reading, 10));
+
+      lcd.setCursor(0,1);
+      lcd.send_string("Mins Done:");
+
+      lcd.setCursor(11, 1);
+      lcd.send_string(itoa(floor(milliseconds_since_motor_started / 60000), buffer_PID_output_for_heater_PWM_value, 10));
+      lcd.setCursor(10, 1);      
+    }
 
     // -------------SAFETY MEASURES & THERMOCOUPLE CHECKS---------------
-
-    // Check for FIRST SAFETY MEASURE (explained above)
-    // Checks that temperature reading between 20 and 30 and that previous temperature was also between 20 and 30
-    // if (current_temperature_reading > 20 && current_temperature_reading < 30 && bool_indicating_temperature_between_20_and_30 == 1){
-    //   bool_indicating_temperature_between_20_and_30 = 1;
-    // }
-    // else{
-    //   bool_indicating_temperature_between_20_and_30 = 0;
-    // }
-
-    // If check for FIRST SAFETY MEASURE in previous checking cycle indicated 
-    // temperature reading was always between 20 and 30
-    // if (temperature_was_between_20_and_30_throughout_last_checking_cycle){
-    //   lcd_red_value = 255;
-    //   current_heater_PWM_value = 0;
-    //   lcd.clear();
-    //   lcd.setCursor(0,0);
-    //   lcd.send_string("Temp not rising");
-    //   lcd.setCursor(0,1);
-    //   lcd.send_string("See thermocouple");
-    // }
 
     // A checking cycle is 100 loops.
     // At the end of the checking cycle, if bool_indicating_temperature_between_20_and_30 is still equal to 1,
@@ -231,33 +251,32 @@ void loop() {
     // }
 
 
-      // Check for FIRST SAFETY MEASURE (explained above)
+    // Check for FIRST SAFETY MEASURE (explained above)
     // Checks that temperature reading between 20 and 30 and that previous temperature was also between 20 and 30
-    if(!block_has_reached_constant_temperature){
+    if(!temperature_was_between_20_and_30_throughout_last_checking_cycle){
       // TODO: try to reduce steady state error so can reduce 2 (see below) to 1
-      if (current_temperature_reading > temperature_setpoint - 2 && current_temperature_reading < temperature_setpoint + 1 && bool_indicating_temperature_within_one_degree_of_temperature_setpoint == 1){
-        bool_indicating_temperature_within_one_degree_of_temperature_setpoint = 1;
+      if (current_temperature_reading > 20 && current_temperature_reading < 20 && bool_indicating_temperature_between_20_and_30 == 1){
+        bool_indicating_temperature_between_20_and_30 = 1;
       }
       else{
-        bool_indicating_temperature_within_one_degree_of_temperature_setpoint = 0;
+        bool_indicating_temperature_between_20_and_30 = 0;
       }
 
       // If statement for performing constant temperature check at the end of the checking cycle
       if (millis() / time_period_of_constant_temperature_checks > number_of_temperature_checks_completed + 1){
         number_of_temperature_checks_completed = number_of_temperature_checks_completed + 1;
-        if (bool_indicating_temperature_within_one_degree_of_temperature_setpoint == 1){
-          block_has_reached_constant_temperature = 1;
+        if (bool_indicating_temperature_between_20_and_30 == 1){
+          temperature_was_between_20_and_30_throughout_last_checking_cycle = 1;
+          current_heater_PWM_value = 0;
 
-          motor_start_time = millis();
         }
         else{
           // Reset bool so next checking cycle for FIRST SAFETY MEASURE can be carried out
-          bool_indicating_temperature_within_one_degree_of_temperature_setpoint = 1;
+          bool_indicating_temperature_between_20_and_30 = 1;
         }
 
       }
     }
-
 
     // SECOND SAFETY MEASURE
     // If temperature goes below 20 degrees, it is likely that the thermocouple is wired the wrong way 
@@ -273,8 +292,12 @@ void loop() {
     // }
 
     // If the thermocouple is not working (i.e. is reading a null value):
-    if(isnan(current_temperature_reading)){
+    if(isnan(current_temperature_reading) || current_temperature_reading == 0){
       current_heater_PWM_value = 0;
+      // lcd.clear();
+      // lcd.send_string('Thermocouple not');
+      // lcd.set_cursor(1,0);
+      // lcd.send_string('working');
     }
 
     // -------------IF THERMOCOUPLE WORKING CORRECTLY AND READING CORRECT TEMPERATURE---------------
@@ -294,7 +317,6 @@ void loop() {
         PID_controller.Compute(); 
         current_heater_PWM_value = PID_output_for_heater_PWM_value;
       }
-
     }
 
     // -------------SETTING HEATER PWM VALUE---------------
@@ -307,18 +329,6 @@ void loop() {
 
     // Printing to LCD and serial
     // lcd.clear();
-    lcd.setCursor(0,0);
-    lcd.send_string("Temp: "); // TODO: convert current_temperature_reading to a string and print it to LCD
-
-    lcd.setCursor(6, 0);
-      // converts current_temperature_reading number to a string (base 10) and sends to LCD
-    lcd.send_string(itoa(current_temperature_reading, buffer_current_temperature_reading, 10));
-
-    lcd.setCursor(0,1);
-    lcd.send_string("PWM out: ");
-
-    lcd.setCursor(10, 1);
-    lcd.send_string(itoa(PID_output_for_heater_PWM_value, buffer_PID_output_for_heater_PWM_value, 10));
 
     // -------------PRINTING TO SERIAL---------------
 
@@ -334,8 +344,17 @@ void loop() {
     Serial.print(" ");
     Serial.println(current_heater_PWM_value);
 
-    lcd.setRGB(lcd_red_value,lcd_green_value,lcd_blue_value);
+    // lcd.setRGB(lcd_red_value,lcd_green_value,lcd_blue_value);
 
-    delay(delay_time_in_ms);
+    // if(milliseconds_since_motor_started > total_test_time_in_milliseconds){
+    //   test_is_complete = 1;
+    //   lcd.clear();
+    // }
   }
+
+  // if(test_is_complete){
+  //   lcd.send_string("Test complete");
+  //   lcd.setCursor(0, 1);
+  //   lcd.send_string("................");
+  // }
 }
