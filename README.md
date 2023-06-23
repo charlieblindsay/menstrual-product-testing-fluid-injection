@@ -45,3 +45,6 @@ The Fluid Injection subassembly team who helped make the Menstrual Product Testi
 NOTE: Since the files in this directory are streamlit files, to run them, change directory into this directory by entering 'cd Testing' in the terminal. Then enter 'streamlit run [FILE NAME].py' in the terminal.  
 - heating_test.py: After pressing 'Capture data' in Realterm to save the Serial printouts of the proxy temperature to the capture.txt file, run this file. Then it will create a live plot of temperature against time. 
 - injection_test.py: Perform same steps in Realterm as with heating_test.py. This streamlit programme prints the expected mass of fluid injected from the number of motor movements performed. This can then be compared with the actual mass of fluid injected.
+
+#### reverse_motor
+- reverse_motor.ino: Run this Arduino programme to turn the stepper motor in the opposite direction. This will move the pusher block backwards. This allows the user to reset the test without having to turn the lead screw by hand.
